@@ -1,5 +1,6 @@
 const { dynamicCommand } = require("../utils/dynamicCommand");
 const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
+const { handleAntiLongText } = require("../middlewares/antiLongText");
 
 exports.onMessagesUpsert = async ({ socket, messages }) => {
   if (!messages.length) {
@@ -13,6 +14,10 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
       continue;
     }
 
+    // Manejo de mensajes largos
+    await handleAntiLongText(commonFunctions);
+
+    // Manejo de comandos dinámicos
     await dynamicCommand(commonFunctions);
   }
 };
