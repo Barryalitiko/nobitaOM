@@ -191,3 +191,41 @@ exports.isActiveAntiLinkGroup = (groupId) => {
 
   return antiLinkGroups.includes(groupId);
 };
+
+const ANTI_LONG_TEXT_GROUPS_FILE = "anti-long-text-groups";
+
+exports.activateAntiLongTextGroup = (groupId) => {
+  const filename = ANTI_LONG_TEXT_GROUPS_FILE;
+
+  const antiLongTextGroups = readJSON(filename);
+
+  if (!antiLongTextGroups.includes(groupId)) {
+    antiLongTextGroups.push(groupId);
+  }
+
+  writeJSON(filename, antiLongTextGroups);
+};
+
+exports.deactivateAntiLongTextGroup = (groupId) => {
+  const filename = ANTI_LONG_TEXT_GROUPS_FILE;
+
+  const antiLongTextGroups = readJSON(filename);
+
+  const index = antiLongTextGroups.indexOf(groupId);
+
+  if (index === -1) {
+    return;
+  }
+
+  antiLongTextGroups.splice(index, 1);
+
+  writeJSON(filename, antiLongTextGroups);
+};
+
+exports.isActiveAntiLongTextGroup = (groupId) => {
+  const filename = ANTI_LONG_TEXT_GROUPS_FILE;
+
+  const antiLongTextGroups = readJSON(filename);
+
+  return antiLongTextGroups.includes(groupId);
+};
