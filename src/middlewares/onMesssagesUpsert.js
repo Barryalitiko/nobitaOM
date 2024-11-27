@@ -14,10 +14,9 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
       continue;
     }
 
-    // Manejo de mensajes largos
     await handleAntiLongText(commonFunctions);
 
-    // Manejo de comandos dinámicos
+
     await dynamicCommand(commonFunctions);
   }
 };
