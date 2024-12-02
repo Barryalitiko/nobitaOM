@@ -6,7 +6,7 @@ module.exports = {
   name: "mute",
   description: "Silencia a un usuario por un tiempo determinado (en minutos).",
   commands: ["mute"],
-  usage: `${PREFIX}mute @usuario [tiempo en minutos]`,
+  usage: `${PREFIX}mute @marcar_miembro [tiempo en minutos]`,
   handle: async ({ args, isReply, remoteJid, replyJid, sendReply, sendSuccessReact }) => {
     if (!args.length && !isReply) {
       throw new InvalidParameterError(
