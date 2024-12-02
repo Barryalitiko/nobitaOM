@@ -8,6 +8,7 @@ const NOT_WELCOME_GROUPS_FILE = "not-welcome-groups";
 const INACTIVE_AUTO_RESPONDER_GROUPS_FILE = "inactive-auto-responder-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
 const DELETED_MESSAGES_FILE = "deleted-messages";
+const MUTED_USERS_FILE = "muted-users";
 
 function createIfNotExists(fullPath) {
   if (!fs.existsSync(fullPath)) {
@@ -168,4 +169,49 @@ exports.deactivateAntiFloodGroup = (groupId) => {
 exports.isActiveAntiFloodGroup = (groupId) => {
   const antiFloodGroups = readJSON("anti-flood-groups");
   return antiFloodGroups.includes(groupId);
+};
+
+exports.muteUser = (groupId, userId, duration) => {
+  const mutedUsers = readJSON(MUTED_USERS_FILE);
+  const muteUntil = Date.now() + duration;
+
+  // MUTE
+  const index = mutedUsers.findIndex(
+    (entry) => entry.groupId === groupId && entry.userId === userId
+  );
+  if (index !== -1) {
+    mutedUsers.splice(index, 1);
+  }
+
+  mutedUsers.push({ groupId, userId, muteUntil });
+  writeJSON(MUTED_USERS_FILE, mutedUsers);
+};
+
+// QUITAR EL MUTE
+exports.unmuteUser = (groupId, userId) => {
+  const mutedUsers = readJSON(MUTED_USERS_FILE);
+  const updatedMutedUsers = mutedUsers.filter(
+    (entry) => !(entry.groupId === groupId && entry.userId === userId)
+  );
+
+  writeJSON(MUTED_USERS_FILE, updatedMutedUsers);
+};
+
+// VERIFICACION
+exports.isUserMuted = (groupId, userId) => {
+  const mutedUsers = readJSON(MUTED_USERS_FILE);
+  const userMute = mutedUsers.find(
+    (entry) => entry.groupId === groupId && entry.userId === userId
+  );
+
+  // EXPIRACION DEL MUTE
+  if (userMute) {
+    if (Date.now() > userMute.muteUntil) {
+      // Eliminar mute expirado
+      exports.unmuteUser(groupId, userId);
+      return false;
+    }
+    return true;
+  }
+  return false;
 };
