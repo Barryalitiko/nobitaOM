@@ -24,9 +24,16 @@ module.exports = {
       }
 
       const userToMute = args[0];
-      const durationInMinutes = parseInt(args[1], 10);
+      let durationInMinutes = args[1];
 
-      if (isNaN(durationInMinutes) || durationInMinutes <= 0 || durationInMinutes > 15) {
+      if (durationInMinutes === undefined) {
+        throw new InvalidParameterError(
+          "👻 Krampus.bot 👻 Debes proporcionar el tiempo de silenciamiento."
+        );
+      }
+
+      durationInMinutes = parseInt(durationInMinutes, 10);
+      if (isNaN(durationInMinutes) || durationInMinutes < 1 || durationInMinutes > 15) {
         throw new InvalidParameterError(
           "👻 Krampus.bot 👻 El tiempo debe ser un número entre 1 y 15 minutos."
         );
