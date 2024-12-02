@@ -1,49 +1,37 @@
 const { PREFIX } = require("../../config");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
-const {
-  muteUser,
-  unmuteUser,
-  isUserMuted
-} = require("../../utils/database");
+const { muteUser } = require("../../utils/database");
 
 module.exports = {
   name: "mute",
-  description: "Silencia o desilencia a un usuario en el grupo.",
+  description: "Silencia a un usuario por un tiempo determinado (en minutos).",
   commands: ["mute"],
-  usage: `${PREFIX}mute [@usuario] [tiempo]`,
-  handle: async ({ args, sendReply, sendSuccessReact, remoteJid, userJid, mentionedJidList }) => {
-    if (args.length < 2) {
+  usage: `${PREFIX}mute @usuario [tiempo en minutos]`,
+  handle: async ({ args, isReply, remoteJid, replyJid, sendReply, sendSuccessReact }) => {
+    if (!args.length && !isReply) {
       throw new InvalidParameterError(
         "👻 Krampus.bot 👻 Usa el comando con @usuario [tiempo en minutos]!"
       );
     }
 
-    // Obtener el usuario mencionado y el tiempo (en minutos)
-    const mentionedUserJid = mentionedJidList[0];
-    const timeInMinutes = parseInt(args[1], 10);
+    // Obtener el JID del usuario a silenciar (si es un mensaje respondido, usar el JID del mensaje)
+    const userToMuteJid = isReply ? replyJid : args[0];
+
+    // Obtener el tiempo de duración (en minutos)
+    const timeInMinutes = parseInt(args[1]);
 
     if (isNaN(timeInMinutes) || timeInMinutes <= 0) {
-      throw new InvalidParameterError(
-        "👻 Krampus.bot 👻 El tiempo debe ser un número mayor que 0."
-      );
+      throw new InvalidParameterError("👻 Krampus.bot 👻 El tiempo debe ser un número mayor que 0!");
     }
 
-    // Verificar si el usuario ya está silenciado
-    if (await isUserMuted(remoteJid, mentionedUserJid)) {
-      await sendReply("👻 Krampus.bot 👻 Este usuario ya está silenciado.");
-      return;
+    if (timeInMinutes > 15) {
+      throw new InvalidParameterError("👻 Krampus.bot 👻 El tiempo máximo para silenciar es de 15 minutos.");
     }
 
-    // Silenciar al usuario
-    await muteUser(remoteJid, mentionedUserJid, timeInMinutes * 60000); // Convertir minutos a milisegundos
+    // Llamada a la función para silenciar al usuario
+    await muteUser(remoteJid, userToMuteJid, timeInMinutes * 60 * 1000); // Convertir minutos a milisegundos
 
     await sendSuccessReact();
     await sendReply(`👻 Krampus.bot 👻 El usuario ha sido silenciado por ${timeInMinutes} minutos.`);
-
-    // Función para desilenciar al usuario después del tiempo especificado
-    setTimeout(async () => {
-      await unmuteUser(remoteJid, mentionedUserJid);
-      await sendReply(`👻 Krampus.bot 👻 El usuario ha sido desilenciado.`);
-    }, timeInMinutes * 60000);
   },
 };
