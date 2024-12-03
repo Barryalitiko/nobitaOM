@@ -9,6 +9,6 @@ exports.checkMute = async ({ socket, userJid, remoteJid }) => {
     }
     return isUserMuted(remoteJid, userJid);
   } catch (error) {
-    return false;
+    throw error;
   }
 };
