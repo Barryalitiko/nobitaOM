@@ -1,14 +1,12 @@
 const { PREFIX, BOT_NUMBER } = require("../../config");
-const { DangerError } = require("../../errors/DangerError");
-const { InvalidParameterError } = require("../../errors/InvalidParameterError");
+const { muteUser, unmuteUser } = require("../../utils/database");
 const { toUserJid, onlyNumbers } = require("../../utils");
-const { muteUser } = require("../../utils/database");
 
 module.exports = {
   name: "mute",
-  description: "Silenciar a un usuario por un tiempo determinado.",
-  commands: ["mute"],
-  usage: `${PREFIX}mute @usuario [tiempo en minutos] ou ${PREFIX}mute respondiendo a un mensaje`,
+  description: "Silenciar o desmutear a un usuario.",
+  commands: ["mute0", "mute1", "mute2", "mute3", "mute4"],
+  usage: `${PREFIX}mute0 @usuario ou ${PREFIX}mute1 @usuario`,
   handle: async ({
     args,
     isReply,
@@ -20,58 +18,76 @@ module.exports = {
     sendSuccessReact,
   }) => {
     try {
-      if (!args.length && !isReply) {
-        throw new InvalidParameterError(
-          "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Menciona a la persona"
-        );
+      let memberToMuteJid;
+
+      if (isReply) {
+        memberToMuteJid = replyJid;
+      } else {
+        if (!args.length) {
+          throw new InvalidParameterError(
+            "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Debes mencionar a la persona que deseas silenciar."
+          );
+        }
+
+        memberToMuteJid = toUserJid(args[0]);
       }
 
-      const memberToMuteJid = isReply ? replyJid : toUserJid(args[0]);
       const memberToMuteNumber = onlyNumbers(memberToMuteJid);
 
       if (memberToMuteNumber.length < 7 || memberToMuteNumber.length > 15) {
-        throw new InvalidParameterError("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙽𝚞́𝚖𝚎𝚛𝚘 𝚗𝚘 in𝚟𝚊𝚕𝚒𝚍𝚘");
+        throw new InvalidParameterError(
+          "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El número de teléfono no es válido."
+        );
       }
 
-      if (memberToMuteJid === userJid) {
-        throw new DangerError("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙽𝚘 𝚜𝚎 𝚙𝚞𝚎𝚍𝚎 𝚛𝚎𝚊𝚕𝚒𝚣𝚊𝚛 𝚕𝚊 𝚊𝚌𝚌𝚒𝚘́𝚗");
+      if (memberToMuteJid === toUserJid(BOT_NUMBER)) {
+        throw new DangerError(
+          "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No puedes silenciar al bot."
+        );
       }
 
-      const botJid = toUserJid(BOT_NUMBER);
-      if (memberToMuteJid === botJid) {
-        throw new DangerError("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙽𝚘 𝚜𝚎 𝚙𝚞𝚎𝚍𝚎 𝚛𝚎𝚊𝚕𝚒𝚣𝚊𝚛 𝚕𝚊 𝚊𝚌𝚌𝚒𝚘́𝚗");
-      }
-
-      const durationInMinutes = args[1];
-      if (durationInMinutes.endsWith("min")) {
-        const minutes = parseInt(durationInMinutes.replace("min", ""), 10);
-        if (isNaN(minutes) || minutes < 1 || minutes > 15) {
-          throw new InvalidParameterError(
-            "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El tiempo de silenciamiento debe ser un número entre 1 y 15 minutos."
-          );
-        }
-        const muteUntil = Date.now() + (minutes * 60 * 1000);
-        await muteUser(remoteJid, memberToMuteJid, muteUntil);
+      if (args[0] === "mute0") {
+        await unmuteUser(remoteJid, memberToMuteJid);
+        await sendSuccessReact();
+        await sendReply(
+          `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El usuario ${memberToMuteJid} ha sido desmutado.`
+        );
       } else {
-        const minutes = parseInt(durationInMinutes, 10);
-        if (isNaN(minutes) || minutes < 1 || minutes > 15) {
+        const durationInMinutes = getDurationInMinutes(args[0]);
+
+        if (durationInMinutes === null) {
           throw new InvalidParameterError(
-            "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El tiempo de silenciamiento debe ser un número entre 1 y 15 minutos."
+            "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Debes proporcionar un comando válido (mute0, mute1, mute2, mute3 o mute4)."
           );
         }
-        const muteUntil = Date.now() + (minutes * 60 * 1000);
+
+        const muteUntil = Date.now() + (durationInMinutes * 60 * 1000);
         await muteUser(remoteJid, memberToMuteJid, muteUntil);
+
+        await sendSuccessReact();
+        await sendReply(
+          `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El usuario ${memberToMuteJid} ha sido silenciado por ${durationInMinutes} minuto(s).`
+        );
       }
-
-
-      await sendSuccessReact();
-      await sendReply(
-        `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El usuario ${memberToMuteJid} ha sido silenciado por ${durationInMinutes} minuto(s).`
-      );
     } catch (error) {
       console.error(error);
       await sendReply(`👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Error: ${error.message}`);
     }
   },
 };
+
+function getDurationInMinutes(command) {
+  switch (command) {
+    case "mute1":
+      return 5;
+    case "mute2":
+      return 10;
+    case "mute3":
+      return 15;
+    case "mute4":
+      return 20;
+    default:
+      return null;
+  }
+}
 
