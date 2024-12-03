@@ -17,9 +17,7 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
     }
 
     // Middleware para manejar usuarios silenciados
-    const isMuted = await new Promise((resolve) => {
-      checkMute(socket, webMessage, () => resolve(false));
-    });
+    const isMuted = await checkMute({ socket, webMessage });
 
     if (isMuted) {
       console.log("Mensaje bloqueado por mute.");
