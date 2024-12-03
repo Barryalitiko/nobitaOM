@@ -43,14 +43,26 @@ module.exports = {
       }
 
       const durationInMinutes = args[1];
-      if (!durationInMinutes) {
-        throw new InvalidParameterError(
-          "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Debes proporcionar el tiempo de silenciamiento."
-        );
+      if (durationInMinutes.endsWith("min")) {
+        const minutes = parseInt(durationInMinutes.replace("min", ""), 10);
+        if (isNaN(minutes) || minutes < 1 || minutes > 15) {
+          throw new InvalidParameterError(
+            "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El tiempo de silenciamiento debe ser un número entre 1 y 15 minutos."
+          );
+        }
+        const muteUntil = Date.now() + (minutes * 60 * 1000);
+        await muteUser(remoteJid, memberToMuteJid, muteUntil);
+      } else {
+        const minutes = parseInt(durationInMinutes, 10);
+        if (isNaN(minutes) || minutes < 1 || minutes > 15) {
+          throw new InvalidParameterError(
+            "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 El tiempo de silenciamiento debe ser un número entre 1 y 15 minutos."
+          );
+        }
+        const muteUntil = Date.now() + (minutes * 60 * 1000);
+        await muteUser(remoteJid, memberToMuteJid, muteUntil);
       }
 
-      const muteUntil = Date.now() + (durationInMinutes * 60 * 1000);
-      await muteUser(remoteJid, memberToMuteJid, muteUntil);
 
       await sendSuccessReact();
       await sendReply(
@@ -62,3 +74,4 @@ module.exports = {
     }
   },
 };
+
